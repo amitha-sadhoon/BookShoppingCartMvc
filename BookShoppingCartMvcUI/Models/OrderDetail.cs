@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookShoppingCartMvcUI.Models
 {
+    [Table("OrderDetail")]
     public class OrderDetail
     {
         public int Id { get; set; }

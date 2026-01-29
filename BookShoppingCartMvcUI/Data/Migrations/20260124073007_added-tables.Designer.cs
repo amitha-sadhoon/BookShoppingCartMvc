@@ -4,6 +4,7 @@ using BookShoppingCartMvcUI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookShoppingCartMvcUI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260124073007_added-tables")]
+    partial class addedtables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,11 +32,6 @@ namespace BookShoppingCartMvcUI.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AuthorName")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("BookName")
                         .IsRequired()
@@ -164,9 +162,6 @@ namespace BookShoppingCartMvcUI.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
 
                     b.Property<string>("StatusName")
                         .IsRequired()
@@ -343,10 +338,12 @@ namespace BookShoppingCartMvcUI.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -383,10 +380,12 @@ namespace BookShoppingCartMvcUI.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");

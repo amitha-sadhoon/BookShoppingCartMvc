@@ -6,8 +6,19 @@ namespace BookShoppingCartMvcUI.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ILogger<HomeController> _Logger;
+        private readonly IHomeRepository _homeRepository;
+
+        public HomeController(ILogger<HomeController> logger, IHomeRepository homeRepository)
         {
+            _homeRepository = homeRepository;
+            _Logger = logger;
+           
+        }
+
+        public IActionResult Index(string sterm="",int genreId=0)
+        {
+            var books=_homeRepository.GetBooks(sterm,genreId);
             return View();
         }
 
