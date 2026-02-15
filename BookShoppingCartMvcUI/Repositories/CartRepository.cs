@@ -43,11 +43,13 @@ namespace BookShoppingCartMvcUI.Repositories
                 }
                 else
                 {
+                    var book = _db.Books.Find(bookId);
                     CartItem = new CartDetail
                     {
                         BookId = bookId,
                         ShoppingCartId = cart.Id,
-                        Quantity = qty
+                        Quantity = qty,
+                        UnitPrice=book.Price
                     };
                     _db.CartDetails.Add(CartItem);
                 }
@@ -124,6 +126,47 @@ namespace BookShoppingCartMvcUI.Repositories
                               select new { cartDetail.Id }
                            ).ToListAsync();
             return data.Count;
+        }
+
+        public async Task DoCheck()
+        {
+            using var transaction = _db.Database.BeginTransaction();
+            try
+            {
+                var userId = GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                    throw new Exception("User is not logged-in");
+                var cart = await GetCart(userId);
+                if (cart is null)
+                    throw new Exception("Invalid cart");
+                var cartDetail = _db.CartDetails
+                                    .Where(a => a.ShoppingCartId == cart.Id).ToList();
+
+                if (cartDetail.Count == 0)
+                    throw new Exception("Cart is empty");
+                var order = new Order
+                {
+                    UserId = userId,
+                    CreateDate = DateTime.UtcNow,
+                    OrderStatusId = 1
+                };
+                _db.Orders.Add(order);
+                _db.SaveChanges();
+                foreach(var item in cartDetail)
+                {
+                    var orderDetail = new OrderDetail
+                    {
+                        BookId=item.BookId,
+                        OrderId=order.Id,
+                        Quantity=item.Quantity,
+                        UnitPrice=item.UnitPrice
+                    };
+                }
+            }
+            catch(Exception)
+            {
+                throw;
+            }
         }
 
         private string GetUserId()
