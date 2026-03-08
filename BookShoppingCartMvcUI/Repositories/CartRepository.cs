@@ -69,17 +69,17 @@ namespace BookShoppingCartMvcUI.Repositories
             try
             {
                 if (string.IsNullOrEmpty(userId))
-                    throw new Exception("user is not logged-in");
+                    throw new UnauthorizedAccessException("user is not logged-in");
                 var cart = await GetCart(userId);
                 if (cart is null)
                 {
-                    throw new Exception("Invalid cart");
+                    throw new InvalidOperationException("Invalid cart");
                 }
                 //cart detail section
                 var CartItem = _db.CartDetails
                                .FirstOrDefault(a => a.ShoppingCartId == cart.Id && a.BookId == bookId);
                 if(CartItem is null)
-                    throw new Exception("Not items in cart");
+                    throw new InvalidOperationException("Not items in cart");
                 else if(CartItem.Quantity==1)
                     _db.CartDetails.Remove(CartItem);
                 else
@@ -99,10 +99,13 @@ namespace BookShoppingCartMvcUI.Repositories
         {
             var userId = GetUserId();
             if (userId == null)
-                throw new Exception("Invalid userid");
+                throw new InvalidOperationException("Invalid userid");
             var shoppingCart=await _db.ShoppingCarts
                                       .Include(a => a.CartDetails)
                                       .ThenInclude(a => a.Book)
+                                      .ThenInclude(a=>a.Stock)
+                                      .Include(a=>a.CartDetails)
+                                      .ThenInclude(a=>a.Book)
                                        .ThenInclude(a => a.Genre)
                                        .Where(a => a.UserId == userId).FirstOrDefaultAsync();
             return shoppingCart;
@@ -136,19 +139,19 @@ namespace BookShoppingCartMvcUI.Repositories
             {
                 var userId = GetUserId();
                 if (string.IsNullOrEmpty(userId))
-                    throw new Exception("User is not logged-in");
+                    throw new UnauthorizedAccessException("User is not logged-in");
                 var cart = await GetCart(userId);
                 if (cart is null)
-                    throw new Exception("Invalid cart");
+                    throw new InvalidOperationException("Invalid cart");
                 var cartDetail = _db.CartDetails
                                     .Where(a => a.ShoppingCartId == cart.Id).ToList();
 
                 if (cartDetail.Count == 0)
-                    throw new Exception("Cart is empty");
+                    throw new InvalidOperationException("Cart is empty");
                 var pendingRecord = _db.OrderStatuses.FirstOrDefault
                     (s => s.StatusName == "Pending");
                 if (pendingRecord is null)
-                    throw new Exception("Order status does not have Pending Status");
+                    throw new InvalidOperationException("Order status does not have Pending Status");
 
                 var order = new Order
                 {
@@ -174,8 +177,22 @@ namespace BookShoppingCartMvcUI.Repositories
                         UnitPrice=item.UnitPrice
                     };
                     _db.OrderDetails.Add(orderDetail);
+
+                    var stock = await _db.Stocks.FirstOrDefaultAsync(a =>
+                    a.BookId == item.BookId);
+                    if(stock==null)
+                    {
+                        throw new InvalidOperationException("Stock is null");
+                    }
+                    if(item.Quantity>stock.Quantity)
+                    {
+                        throw new InvalidOperationException($"Only{stock.Quantity} items(s) are available in the stock");
+                    }
+                    stock.Quantity -= item.Quantity;
                 }
-                _db.SaveChanges();
+
+
+                //_db.SaveChanges();
 
                 //removing the cartdetails
                 _db.CartDetails.RemoveRange(cartDetail);

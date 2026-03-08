@@ -5,16 +5,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BookShoppingCartMvcUI.Controllers;
 
-[Authorize(Roles =nameof(Roles.Admin))]
-
+[Authorize(Roles = nameof(Roles.Admin))]
 public class AdminOperationsController : Controller
 {
     private readonly IUserOrderRepository _userOrderRepository;
     public AdminOperationsController(IUserOrderRepository userOrderRepository)
     {
-        _userOrderRepository = userOrderRepository; 
+        _userOrderRepository = userOrderRepository;
     }
-   public async Task<IActionResult> AllOrders()
+
+    public async Task<IActionResult> AllOrders()
     {
         var orders = await _userOrderRepository.UserOrders(true);
         return View(orders);
@@ -28,34 +28,22 @@ public class AdminOperationsController : Controller
         }
         catch (Exception ex)
         {
-
+            // log exception here
         }
         return RedirectToAction(nameof(AllOrders));
     }
 
-    public async Task<IActionResult> UpdatePaymentStatus(int orderId)
-    { 
-    var order=await _userOrderRepository.GetOrderById(orderId);
+    public async Task<IActionResult> UpdateOrderStatus(int orderId)
+    {
+        var order = await _userOrderRepository.GetOrderById(orderId);
         if (order == null)
         {
-            throw new InvalidOperationException($"Order with id:{orderId}does not found.");
+            throw new InvalidOperationException($"Order with id:{orderId} does not found.");
         }
-        var orderStatusList = (await _userOrderRepository.GetOrderStatuses()).Select(orderStatus
-            =>
+        var orderStatusList = (await _userOrderRepository.GetOrderStatuses()).Select(orderStatus =>
         {
-            return new SelectListItem
-            {
-                Value =
-                orderStatus.Id.ToString(),
-                Text =
-                orderStatus.StatusName,
-                Selected = order.OrderStatusId
-                == orderStatus.Id
-            };
-
-
+            return new SelectListItem { Value = orderStatus.Id.ToString(), Text = orderStatus.StatusName, Selected = order.OrderStatusId == orderStatus.Id };
         });
-
         var data = new UpdateOrderStatusModel
         {
             OrderId = orderId,
@@ -64,28 +52,19 @@ public class AdminOperationsController : Controller
         };
         return View(data);
     }
+
     [HttpPost]
-    public async Task<IActionResult> UpdatePaymentStatus
-        (UpdateOrderStatusModel data)
+    public async Task<IActionResult> UpdateOrderStatus(UpdateOrderStatusModel data)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                data.OrderStatusList = (await
-                    _userOrderRepository.GetOrderStatuses()).Select
-                    (orderStatus =>
-                    {
-                        return new SelectListItem
-                        {
-                            Value =
-                            orderStatus.Id.ToString(),
-                            Text =
-                            orderStatus.StatusName,
-                            Selected = orderStatus.Id
-                        == data.OrderStatusId
-                        };
-                    });
+                data.OrderStatusList = (await _userOrderRepository.GetOrderStatuses()).Select(orderStatus =>
+                {
+                    return new SelectListItem { Value = orderStatus.Id.ToString(), Text = orderStatus.StatusName, Selected = orderStatus.Id == data.OrderStatusId };
+                });
+
                 return View(data);
             }
             await _userOrderRepository.ChangeOrderStatus(data);
@@ -93,9 +72,16 @@ public class AdminOperationsController : Controller
         }
         catch (Exception ex)
         {
-            TempData["msg"] = "SOmething went wrong";
+            // catch exception here
+            TempData["msg"] = "Something went wrong";
         }
-        return RedirectToAction(nameof(UpdatePaymentStatus), new
-        { orderId = data.OrderId });
+        return RedirectToAction(nameof(UpdateOrderStatus), new { orderId = data.OrderId });
     }
+
+
+    public IActionResult Dashboard()
+    {
+        return View();
+    }
+
 }
